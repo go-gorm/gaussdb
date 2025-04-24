@@ -1,4 +1,4 @@
-module gorm.io/driver/postgres
+module gorm.io/driver/gaussdb
 
 go 1.19
 

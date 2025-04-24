@@ -4,7 +4,7 @@
 
 ```go
 import (
-  "gorm.io/driver/postgres"
+  "gorm.io/driver/gaussdb"
   "gorm.io/gorm"
 )
 
@@ -17,7 +17,7 @@ db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 ```go
 import (
-  "gorm.io/driver/postgres"
+  "gorm.io/driver/gaussdb"
   "gorm.io/gorm"
 )
 
