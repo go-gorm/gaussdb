@@ -1,4 +1,4 @@
-package postgres
+package gaussdb
 
 import (
 	"gorm.io/gorm/schema"
