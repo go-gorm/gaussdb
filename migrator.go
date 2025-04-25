@@ -3,7 +3,7 @@ package gaussdb
 import (
 	"database/sql"
 	"fmt"
-	"github.com/jackc/pgx/v5"
+	"github.com/HuaweiCloudDeveloper/gaussdb-go"
 	"regexp"
 	"strings"
 
@@ -619,7 +619,7 @@ func (m Migrator) GetRows(currentSchema interface{}, table interface{}) (*sql.Ro
 		dialector, _ := m.Dialector.(Dialector)
 		// use simple protocol
 		if !m.DB.PrepareStmt && (dialector.Config != nil && (dialector.Config.DriverName == "" || dialector.Config.DriverName == "pgx")) {
-			d.Statement.Vars = append([]interface{}{pgx.QueryExecModeSimpleProtocol}, d.Statement.Vars...)
+			d.Statement.Vars = append([]interface{}{gaussdbgo.QueryExecModeSimpleProtocol}, d.Statement.Vars...)
 		}
 		return d
 	}).Rows()

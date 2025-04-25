@@ -2,10 +2,9 @@ package gaussdb
 
 import (
 	"encoding/json"
+	"github.com/HuaweiCloudDeveloper/gaussdb-go/gaussdbconn"
 
 	"gorm.io/gorm"
-
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // The error codes to map PostgreSQL errors to gorm errors, here is the PostgreSQL error codes reference https://www.postgresql.org/docs/current/errcodes-appendix.html.
@@ -25,7 +24,7 @@ type ErrMessage struct {
 // Translate it will translate the error to native gorm errors.
 // Since currently gorm supporting both pgx and pg drivers, only checking for pgx PgError types is not enough for translating errors, so we have additional error json marshal fallback.
 func (dialector Dialector) Translate(err error) error {
-	if pgErr, ok := err.(*pgconn.PgError); ok {
+	if pgErr, ok := err.(*gaussdbconn.GaussdbError); ok {
 		if translatedErr, found := errCodes[pgErr.Code]; found {
 			return translatedErr
 		}

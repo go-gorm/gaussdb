@@ -2,9 +2,9 @@ package gaussdb
 
 import (
 	"errors"
+	"github.com/HuaweiCloudDeveloper/gaussdb-go/gaussdbconn"
 	"testing"
 
-	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 )
 
@@ -23,22 +23,22 @@ func TestDialector_Translate(t *testing.T) {
 	}{
 		{
 			name: "it should return ErrDuplicatedKey error if the status code is 23505",
-			args: args{err: &pgconn.PgError{Code: "23505"}},
+			args: args{err: &gaussdbconn.GaussdbError{Code: "23505"}},
 			want: gorm.ErrDuplicatedKey,
 		},
 		{
 			name: "it should return ErrForeignKeyViolated error if the status code is 23503",
-			args: args{err: &pgconn.PgError{Code: "23503"}},
+			args: args{err: &gaussdbconn.GaussdbError{Code: "23503"}},
 			want: gorm.ErrForeignKeyViolated,
 		},
 		{
 			name: "it should return gorm.ErrInvalidField error if the status code is 42703",
-			args: args{err: &pgconn.PgError{Code: "42703"}},
+			args: args{err: &gaussdbconn.GaussdbError{Code: "42703"}},
 			want: gorm.ErrInvalidField,
 		},
 		{
 			name: "it should return gorm.ErrCheckConstraintViolated error if the status code is 23514",
-			args: args{err: &pgconn.PgError{Code: "23514"}},
+			args: args{err: &gaussdbconn.GaussdbError{Code: "23514"}},
 			want: gorm.ErrCheckConstraintViolated,
 		},
 	}

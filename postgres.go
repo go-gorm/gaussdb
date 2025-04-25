@@ -3,12 +3,12 @@ package gaussdb
 import (
 	"database/sql"
 	"fmt"
+	"github.com/HuaweiCloudDeveloper/gaussdb-go"
 	"regexp"
 	"strconv"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/HuaweiCloudDeveloper/gaussdb-go/stdlib"
 	"gorm.io/gorm"
 	"gorm.io/gorm/callbacks"
 	"gorm.io/gorm/clause"
@@ -89,14 +89,14 @@ func (dialector Dialector) Initialize(db *gorm.DB) (err error) {
 	} else if dialector.DriverName != "" {
 		db.ConnPool, err = sql.Open(dialector.DriverName, dialector.Config.DSN)
 	} else {
-		var config *pgx.ConnConfig
+		var config *gaussdbgo.ConnConfig
 
-		config, err = pgx.ParseConfig(dialector.Config.DSN)
+		config, err = gaussdbgo.ParseConfig(dialector.Config.DSN)
 		if err != nil {
 			return
 		}
 		if dialector.Config.PreferSimpleProtocol {
-			config.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+			config.DefaultQueryExecMode = gaussdbgo.QueryExecModeSimpleProtocol
 		}
 		result := timeZoneMatcher.FindStringSubmatch(dialector.Config.DSN)
 		if len(result) > 2 {
@@ -125,7 +125,7 @@ func (dialector Dialector) BindVarTo(writer clause.Writer, stmt *gorm.Statement,
 	varLen := len(stmt.Vars)
 	if varLen > 0 {
 		switch stmt.Vars[0].(type) {
-		case pgx.QueryExecMode:
+		case gaussdbgo.QueryExecMode:
 			index++
 		}
 	}
