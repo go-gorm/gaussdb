@@ -1,4 +1,4 @@
-module gorm.io/driver/gaussdb
+module github.com/moseszane168/gaussdb
 
 go 1.21
 
