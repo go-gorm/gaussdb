@@ -44,7 +44,7 @@ func New(config Config) gorm.Dialector {
 }
 
 func (dialector Dialector) Name() string {
-	return "postgres"
+	return "gaussdb"
 }
 
 func (dialector Dialector) Apply(config *gorm.Config) error {
@@ -72,7 +72,7 @@ func (dialector Dialector) Apply(config *gorm.Config) error {
 
 func (dialector Dialector) Initialize(db *gorm.DB) (err error) {
 	callbackConfig := &callbacks.Config{
-		CreateClauses: []string{"INSERT", "VALUES", "ON CONFLICT"},
+		CreateClauses: []string{"INSERT", "VALUES", "MERGE"},
 		UpdateClauses: []string{"UPDATE", "SET", "FROM", "WHERE"},
 		DeleteClauses: []string{"DELETE", "FROM", "WHERE"},
 	}
