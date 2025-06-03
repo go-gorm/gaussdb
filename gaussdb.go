@@ -3,10 +3,11 @@ package gaussdb
 import (
 	"database/sql"
 	"fmt"
-	"github.com/HuaweiCloudDeveloper/gaussdb-go"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/HuaweiCloudDeveloper/gaussdb-go"
 
 	"github.com/HuaweiCloudDeveloper/gaussdb-go/stdlib"
 	"gorm.io/gorm"
@@ -32,7 +33,7 @@ type Config struct {
 
 var (
 	timeZoneMatcher         = regexp.MustCompile("(time_zone|TimeZone)=(.*?)($|&| )")
-	defaultIdentifierLength = 63 //maximum identifier length for postgres
+	defaultIdentifierLength = 63 //maximum identifier length for gaussdb
 )
 
 func Open(dsn string) gorm.Dialector {

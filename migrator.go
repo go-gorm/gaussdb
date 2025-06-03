@@ -3,9 +3,10 @@ package gaussdb
 import (
 	"database/sql"
 	"fmt"
-	"github.com/HuaweiCloudDeveloper/gaussdb-go"
 	"regexp"
 	"strings"
+
+	"github.com/HuaweiCloudDeveloper/gaussdb-go"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -13,7 +14,7 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-// See https://stackoverflow.com/questions/2204058/list-columns-with-indexes-in-postgresql
+// See https://stackoverflow.com/questions/2204058/list-columns-with-indexes-in-gaussdb
 // Here are some changes:
 // - use `LEFT JOIN` instead of `CROSS JOIN`
 // - exclude indexes used to support constraints (they are auto-generated)
@@ -593,7 +594,7 @@ func (m Migrator) ColumnTypes(value interface{}) (columnTypes []gorm.ColumnType,
 						mc.ColumnTypeValue = sql.NullString{String: dataType, Valid: true}
 						// Handle array type: _text -> text[] , _int4 -> integer[]
 						// Not support array size limits and array size limits because:
-						// https://www.postgresql.org/docs/current/arrays.html#ARRAYS-DECLARATION
+						// https://www.gaussdb.org/docs/current/arrays.html#ARRAYS-DECLARATION
 						if strings.HasPrefix(mc.DataTypeValue.String, "_") {
 							mc.DataTypeValue = sql.NullString{String: dataType, Valid: true}
 						}
