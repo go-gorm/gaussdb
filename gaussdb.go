@@ -73,7 +73,7 @@ func (dialector Dialector) Apply(config *gorm.Config) error {
 
 func (dialector Dialector) Initialize(db *gorm.DB) (err error) {
 	callbackConfig := &callbacks.Config{
-		CreateClauses: []string{"INSERT", "VALUES", "MERGE"},
+		CreateClauses: []string{"INSERT", "VALUES", "MERGE", "ON CONFLICT"},
 		UpdateClauses: []string{"UPDATE", "SET", "FROM", "WHERE"},
 		DeleteClauses: []string{"DELETE", "FROM", "WHERE"},
 	}
@@ -104,6 +104,11 @@ func (dialector Dialector) Initialize(db *gorm.DB) (err error) {
 			config.RuntimeParams["timezone"] = result[2]
 		}
 		db.ConnPool = stdlib.OpenDB(*config)
+	}
+	for k, v := range dialector.ClauseBuilders() {
+		if _, ok := db.ClauseBuilders[k]; !ok {
+			db.ClauseBuilders[k] = v
+		}
 	}
 	return
 }
@@ -276,6 +281,27 @@ func (dialector Dialector) RollbackTo(tx *gorm.DB, name string) error {
 	return nil
 }
 
+const (
+	// ClauseOnConflict for clause.ClauseBuilder ON CONFLICT key
+	ClauseOnConflict = "ON CONFLICT"
+)
+
+func (dialector Dialector) ClauseBuilders() map[string]clause.ClauseBuilder {
+	clauseBuilders := map[string]clause.ClauseBuilder{
+		ClauseOnConflict: func(c clause.Clause, builder clause.Builder) {
+			//onConflict, ok := c.Expression.(clause.OnConflict)
+			_, ok := c.Expression.(clause.OnConflict)
+			if !ok {
+				c.Build(builder)
+				return
+			}
+
+			builder.WriteString("ON DUPLICATE KEY UPDATE NOTHING ")
+		},
+	}
+
+	return clauseBuilders
+}
 func getSerialDatabaseType(s string) (dbType string, ok bool) {
 	switch s {
 	case "smallserial":
