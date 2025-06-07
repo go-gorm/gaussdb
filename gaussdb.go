@@ -289,14 +289,29 @@ const (
 func (dialector Dialector) ClauseBuilders() map[string]clause.ClauseBuilder {
 	clauseBuilders := map[string]clause.ClauseBuilder{
 		ClauseOnConflict: func(c clause.Clause, builder clause.Builder) {
-			//onConflict, ok := c.Expression.(clause.OnConflict)
-			_, ok := c.Expression.(clause.OnConflict)
+			onConflict, ok := c.Expression.(clause.OnConflict)
 			if !ok {
 				c.Build(builder)
 				return
 			}
 
-			builder.WriteString("ON DUPLICATE KEY UPDATE NOTHING ")
+			builder.WriteString("ON DUPLICATE KEY UPDATE ")
+			for idx, assignment := range onConflict.DoUpdates {
+				if idx > 0 {
+					builder.WriteByte(',')
+				}
+
+				builder.WriteQuoted(assignment.Column)
+				builder.WriteByte('=')
+				if column, ok := assignment.Value.(clause.Column); ok && column.Table == "excluded" {
+					column.Table = ""
+					builder.WriteString("VALUES(")
+					builder.WriteQuoted(column)
+					builder.WriteByte(')')
+				} else {
+					builder.AddVar(builder, assignment.Value)
+				}
+			}
 		},
 	}
 
