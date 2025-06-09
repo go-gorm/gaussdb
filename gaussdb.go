@@ -296,6 +296,24 @@ func (dialector Dialector) ClauseBuilders() map[string]clause.ClauseBuilder {
 			}
 
 			builder.WriteString("ON DUPLICATE KEY UPDATE ")
+			if len(onConflict.DoUpdates) == 0 {
+				if s := builder.(*gorm.Statement).Schema; s != nil {
+					var column clause.Column
+					onConflict.DoNothing = false
+
+					if s.PrioritizedPrimaryField != nil {
+						column = clause.Column{Name: s.PrioritizedPrimaryField.DBName}
+					} else if len(s.DBNames) > 0 {
+						column = clause.Column{Name: s.DBNames[0]}
+					}
+
+					if column.Name != "" {
+						onConflict.DoUpdates = []clause.Assignment{{Column: column, Value: column}}
+					}
+
+					builder.(*gorm.Statement).AddClause(onConflict)
+				}
+			}
 			for idx, assignment := range onConflict.DoUpdates {
 				if idx > 0 {
 					builder.WriteByte(',')
