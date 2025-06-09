@@ -294,31 +294,40 @@ func (dialector Dialector) ClauseBuilders() map[string]clause.ClauseBuilder {
 				c.Build(builder)
 				return
 			}
-
-			builder.WriteString("ON DUPLICATE KEY UPDATE ")
+			toWrite := "ON DUPLICATE KEY UPDATE "
+			//nothingFlag := false
 			if len(onConflict.DoUpdates) == 0 {
 				if s := builder.(*gorm.Statement).Schema; s != nil {
 					var column clause.Column
-					onConflict.DoNothing = false
-
 					if s.PrioritizedPrimaryField != nil {
 						column = clause.Column{Name: s.PrioritizedPrimaryField.DBName}
 					} else if len(s.DBNames) > 0 {
 						column = clause.Column{Name: s.DBNames[0]}
 					}
-
 					if column.Name != "" {
-						onConflict.DoUpdates = []clause.Assignment{{Column: column, Value: column}}
+						if isPrimaryOrUniqueKey(builder, column.Name) {
+							//nothingFlag = true
+							toWrite += "NOTHING "
+						} else {
+							onConflict.DoUpdates = []clause.Assignment{{Column: column, Value: column}}
+							onConflict.DoNothing = false
+						}
 					}
-
 					builder.(*gorm.Statement).AddClause(onConflict)
 				}
 			}
-			for idx, assignment := range onConflict.DoUpdates {
-				if idx > 0 {
+			builder.WriteString(toWrite)
+			notFirst := false
+			for _, assignment := range onConflict.DoUpdates {
+				if isPrimaryOrUniqueKey(builder, assignment.Column.Name) {
+					//if !nothingFlag {
+					//	toWrite += "NOTHING "
+					//}
+					continue
+				}
+				if notFirst {
 					builder.WriteByte(',')
 				}
-
 				builder.WriteQuoted(assignment.Column)
 				builder.WriteByte('=')
 				if column, ok := assignment.Value.(clause.Column); ok && column.Table == "excluded" {
@@ -329,6 +338,7 @@ func (dialector Dialector) ClauseBuilders() map[string]clause.ClauseBuilder {
 				} else {
 					builder.AddVar(builder, assignment.Value)
 				}
+				notFirst = true
 			}
 		},
 	}
@@ -346,4 +356,19 @@ func getSerialDatabaseType(s string) (dbType string, ok bool) {
 	default:
 		return "", false
 	}
+}
+
+func isPrimaryOrUniqueKey(builder clause.Builder, name string) bool {
+	s := builder.(*gorm.Statement).Schema
+	if s == nil || name == "" {
+		return false
+	}
+	if s.PrimaryFields != nil {
+		for _, field := range s.PrimaryFields {
+			if field.DBName == name && (field.PrimaryKey || field.Unique) {
+				return true
+			}
+		}
+	}
+	return false
 }
