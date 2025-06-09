@@ -294,8 +294,6 @@ func (dialector Dialector) ClauseBuilders() map[string]clause.ClauseBuilder {
 				c.Build(builder)
 				return
 			}
-			toWrite := "ON DUPLICATE KEY UPDATE "
-			//nothingFlag := false
 			if len(onConflict.DoUpdates) == 0 {
 				if s := builder.(*gorm.Statement).Schema; s != nil {
 					var column clause.Column
@@ -304,28 +302,25 @@ func (dialector Dialector) ClauseBuilders() map[string]clause.ClauseBuilder {
 					} else if len(s.DBNames) > 0 {
 						column = clause.Column{Name: s.DBNames[0]}
 					}
-					if column.Name != "" {
-						if isPrimaryOrUniqueKey(builder, column.Name) {
-							//nothingFlag = true
-							toWrite += "NOTHING "
-						} else {
-							onConflict.DoUpdates = []clause.Assignment{{Column: column, Value: column}}
-							onConflict.DoNothing = false
-						}
+					if column.Name != "" && !isPrimaryOrUniqueKey(builder, column.Name) {
+						onConflict.DoUpdates = []clause.Assignment{{Column: column, Value: column}}
+						onConflict.DoNothing = false
 					}
 					builder.(*gorm.Statement).AddClause(onConflict)
 				}
 			}
-			builder.WriteString(toWrite)
-			notFirst := false
+
+			notFirstField := false
+			hasWritten := false
 			for _, assignment := range onConflict.DoUpdates {
 				if isPrimaryOrUniqueKey(builder, assignment.Column.Name) {
-					//if !nothingFlag {
-					//	toWrite += "NOTHING "
-					//}
 					continue
 				}
-				if notFirst {
+				if !hasWritten {
+					builder.WriteString("ON DUPLICATE KEY UPDATE ")
+					hasWritten = true
+				}
+				if notFirstField {
 					builder.WriteByte(',')
 				}
 				builder.WriteQuoted(assignment.Column)
@@ -338,7 +333,10 @@ func (dialector Dialector) ClauseBuilders() map[string]clause.ClauseBuilder {
 				} else {
 					builder.AddVar(builder, assignment.Value)
 				}
-				notFirst = true
+				notFirstField = true
+			}
+			if !hasWritten {
+				builder.WriteString("ON DUPLICATE KEY UPDATE NOTHING")
 			}
 		},
 	}
