@@ -1,4 +1,4 @@
-# GaussDB Driver
+# GORM GaussDB Driver
 
 ## Quick Start
 
