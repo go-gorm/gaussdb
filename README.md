@@ -1,4 +1,4 @@
-# GORM PostgreSQL Driver
+# GORM GaussDB Driver
 
 ## Quick Start
 

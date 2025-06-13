@@ -1,8 +1,9 @@
 package gaussdb
 
 import (
-	"gorm.io/gorm/schema"
 	"testing"
+
+	"gorm.io/gorm/schema"
 )
 
 func Test_DataTypeOf(t *testing.T) {

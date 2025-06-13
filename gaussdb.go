@@ -3,10 +3,11 @@ package gaussdb
 import (
 	"database/sql"
 	"fmt"
-	"github.com/HuaweiCloudDeveloper/gaussdb-go"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/HuaweiCloudDeveloper/gaussdb-go"
 
 	"github.com/HuaweiCloudDeveloper/gaussdb-go/stdlib"
 	"gorm.io/gorm"
@@ -32,7 +33,7 @@ type Config struct {
 
 var (
 	timeZoneMatcher         = regexp.MustCompile("(time_zone|TimeZone)=(.*?)($|&| )")
-	defaultIdentifierLength = 63 //maximum identifier length for postgres
+	defaultIdentifierLength = 63 //maximum identifier length for gaussdb
 )
 
 func Open(dsn string) gorm.Dialector {
@@ -72,7 +73,7 @@ func (dialector Dialector) Apply(config *gorm.Config) error {
 
 func (dialector Dialector) Initialize(db *gorm.DB) (err error) {
 	callbackConfig := &callbacks.Config{
-		CreateClauses: []string{"INSERT", "VALUES", "MERGE"},
+		CreateClauses: []string{"INSERT", "VALUES", "MERGE", "ON CONFLICT"},
 		UpdateClauses: []string{"UPDATE", "SET", "FROM", "WHERE"},
 		DeleteClauses: []string{"DELETE", "FROM", "WHERE"},
 	}
@@ -103,6 +104,11 @@ func (dialector Dialector) Initialize(db *gorm.DB) (err error) {
 			config.RuntimeParams["timezone"] = result[2]
 		}
 		db.ConnPool = stdlib.OpenDB(*config)
+	}
+	for k, v := range dialector.ClauseBuilders() {
+		if _, ok := db.ClauseBuilders[k]; !ok {
+			db.ClauseBuilders[k] = v
+		}
 	}
 	return
 }
@@ -275,6 +281,68 @@ func (dialector Dialector) RollbackTo(tx *gorm.DB, name string) error {
 	return nil
 }
 
+const (
+	// ClauseOnConflict for clause.ClauseBuilder ON CONFLICT key
+	ClauseOnConflict = "ON CONFLICT"
+)
+
+func (dialector Dialector) ClauseBuilders() map[string]clause.ClauseBuilder {
+	clauseBuilders := map[string]clause.ClauseBuilder{
+		ClauseOnConflict: func(c clause.Clause, builder clause.Builder) {
+			onConflict, ok := c.Expression.(clause.OnConflict)
+			if !ok {
+				c.Build(builder)
+				return
+			}
+			if len(onConflict.DoUpdates) == 0 {
+				if s := builder.(*gorm.Statement).Schema; s != nil {
+					var column clause.Column
+					if s.PrioritizedPrimaryField != nil {
+						column = clause.Column{Name: s.PrioritizedPrimaryField.DBName}
+					} else if len(s.DBNames) > 0 {
+						column = clause.Column{Name: s.DBNames[0]}
+					}
+					if column.Name != "" && !isPrimaryOrUniqueKey(builder, column.Name) {
+						onConflict.DoUpdates = []clause.Assignment{{Column: column, Value: column}}
+						onConflict.DoNothing = false
+					}
+					builder.(*gorm.Statement).AddClause(onConflict)
+				}
+			}
+
+			notFirstField := false
+			hasWritten := false
+			for _, assignment := range onConflict.DoUpdates {
+				if isPrimaryOrUniqueKey(builder, assignment.Column.Name) {
+					continue
+				}
+				if !hasWritten {
+					builder.WriteString("ON DUPLICATE KEY UPDATE ")
+					hasWritten = true
+				}
+				if notFirstField {
+					builder.WriteByte(',')
+				}
+				builder.WriteQuoted(assignment.Column)
+				builder.WriteByte('=')
+				if column, ok := assignment.Value.(clause.Column); ok && column.Table == "excluded" {
+					column.Table = ""
+					builder.WriteString("VALUES(")
+					builder.WriteQuoted(column)
+					builder.WriteByte(')')
+				} else {
+					builder.AddVar(builder, assignment.Value)
+				}
+				notFirstField = true
+			}
+			if !hasWritten {
+				builder.WriteString("ON DUPLICATE KEY UPDATE NOTHING")
+			}
+		},
+	}
+
+	return clauseBuilders
+}
 func getSerialDatabaseType(s string) (dbType string, ok bool) {
 	switch s {
 	case "smallserial":
@@ -286,4 +354,19 @@ func getSerialDatabaseType(s string) (dbType string, ok bool) {
 	default:
 		return "", false
 	}
+}
+
+func isPrimaryOrUniqueKey(builder clause.Builder, name string) bool {
+	s := builder.(*gorm.Statement).Schema
+	if s == nil || name == "" {
+		return false
+	}
+	if s.PrimaryFields != nil {
+		for _, field := range s.PrimaryFields {
+			if field.DBName == name && (field.PrimaryKey || field.Unique) {
+				return true
+			}
+		}
+	}
+	return false
 }

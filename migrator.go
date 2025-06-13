@@ -3,9 +3,10 @@ package gaussdb
 import (
 	"database/sql"
 	"fmt"
-	"github.com/HuaweiCloudDeveloper/gaussdb-go"
 	"regexp"
 	"strings"
+
+	"github.com/HuaweiCloudDeveloper/gaussdb-go"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -672,7 +673,7 @@ func (m Migrator) UpdateSequence(tx *gorm.DB, stmt *gorm.Statement, field *schem
 		return err
 	}
 
-	if err = tx.Exec(`ALTER SEQUENCE IF EXISTS ? AS ?`, clause.Expr{SQL: sequenceName}, clause.Expr{SQL: serialDatabaseType}).Error; err != nil {
+	if err = tx.Exec(`ALTER SEQUENCE IF EXISTS ? OWNED BY ?`, clause.Expr{SQL: sequenceName}, clause.Expr{SQL: fmt.Sprintf("%s.%s", stmt.Table, field.Name)}).Error; err != nil {
 		return err
 	}
 

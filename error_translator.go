@@ -2,6 +2,7 @@ package gaussdb
 
 import (
 	"encoding/json"
+
 	"github.com/HuaweiCloudDeveloper/gaussdb-go/gaussdbconn"
 
 	"gorm.io/gorm"
