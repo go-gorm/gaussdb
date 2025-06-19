@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// The error codes to map PostgreSQL errors to gorm errors, here is the PostgreSQL error codes reference https://www.postgresql.org/docs/current/errcodes-appendix.html.
+// The error codes to map GaussDB errors to gorm errors, here is the GaussDB error codes reference https://support.huaweicloud.com/gaussdb/index.html.
 var errCodes = map[string]error{
 	"23505": gorm.ErrDuplicatedKey,
 	"23503": gorm.ErrForeignKeyViolated,
