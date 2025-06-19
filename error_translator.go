@@ -23,7 +23,7 @@ type ErrMessage struct {
 }
 
 // Translate it will translate the error to native gorm errors.
-// Since currently gorm supporting both pgx and pg drivers, only checking for pgx PgError types is not enough for translating errors, so we have additional error json marshal fallback.
+// Since currently gorm supporting both gaussdb and pg drivers, only checking for gaussdb PgError types is not enough for translating errors, so we have additional error json marshal fallback.
 func (dialector Dialector) Translate(err error) error {
 	if pgErr, ok := err.(*gaussdbconn.GaussdbError); ok {
 		if translatedErr, found := errCodes[pgErr.Code]; found {
