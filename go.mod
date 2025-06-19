@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.23.4
 
 require (
-	github.com/HuaweiCloudDeveloper/gaussdb-go v0.0.0-20250424093817-6546ce07372a
+	github.com/HuaweiCloudDeveloper/gaussdb-go v1.0.0-rc1
 	gorm.io/gorm v1.25.10
 )
 
