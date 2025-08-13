@@ -1,6 +1,6 @@
 module gorm.io/driver/gaussdb
 
-go 1.21
+go 1.23.0
 
 toolchain go1.23.4
 
@@ -16,9 +16,9 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
-	golang.org/x/crypto v0.31.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 )
 
 retract v1.5.5 // Published accidentally.
